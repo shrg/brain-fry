@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Brain Fry — юнит-тесты</title>
+  <style>
+    :root { --bg:#0b070d; --card:#1c1019; --text:#f6e9e0; --muted:#b59a93;
+      --good:#36d399; --bad:#ff2e63; --line:#34202b; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      background:var(--bg); color:var(--text); padding:16px; line-height:1.4; }
+    .wrap { max-width:680px; margin:0 auto; }
+    h1 { font-size:22px; }
+    .summary { font-size:18px; font-weight:700; padding:14px; border-radius:12px;
+      border:1px solid var(--line); margin:12px 0; }
+    .summary.pass { color:var(--good); border-color:var(--good); }
+    .summary.fail { color:var(--bad); border-color:var(--bad); }
+    .grp { margin:14px 0; }
+    .grp h2 { font-size:14px; color:var(--muted); margin:0 0 6px; text-transform:uppercase; letter-spacing:.5px; }
+    .case { font-size:13px; padding:6px 10px; border-bottom:1px solid var(--line); display:flex; gap:8px; }
+    .case .mark { width:18px; }
+    .case.ok .mark { color:var(--good); }
+    .case.no .mark { color:var(--bad); }
+    .case .detail { color:var(--muted); }
+    code { background:#000; padding:1px 5px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Brain Fry · юнит-тесты «число→слова» (§3)</h1>
+    <div id="summary" class="summary">Запускаю…</div>
+    <div id="out"></div>
+  </div>
+
+  <script type="module">
+    import { cardinal, yearForms, currencyToWords, parseAmount } from "./js/numwords.js";
+
+    const results = [];
+    let curGroup = null;
+    const out = document.getElementById("out");
+
+    function group(name) {
+      curGroup = { name, el: document.createElement("div") };
+      curGroup.el.className = "grp";
+      curGroup.el.innerHTML = "<h2>" + name + "</h2>";
+      out.appendChild(curGroup.el);
+    }
+    function eq(label, actual, expected) {
+      const ok = actual === expected;
+      results.push({ group: curGroup.name, label, ok, actual, expected });
+      const row = document.createElement("div");
+      row.className = "case " + (ok ? "ok" : "no");
+      row.innerHTML = '<span class="mark">' + (ok ? "✓" : "✗") + '</span>'
+        + '<span><b>' + label + '</b>'
+        + (ok ? '' : '<div class="detail">получено: <code>' + actual
+                + '</code><br>ожидалось: <code>' + expected + '</code></div>')
+        + '</span>';
+      curGroup.el.appendChild(row);
+    }
+    function ok(label, cond) { eq(label, cond ? true : false, true); }
+    function includes(label, arr, val) {
+      const has = Array.isArray(arr) && arr.indexOf(val) !== -1;
+      eq(label + " ∋ «" + val + "»", has, true);
+    }
+
+    // ---- 3.1 Кардинальные числа ----
+    group("Кардинальные числа (§3.1)");
+    eq("0", cardinal(0), "zero");
+    eq("1", cardinal(1), "one");
+    eq("7", cardinal(7), "seven");
+    eq("12", cardinal(12), "twelve");
+    eq("84", cardinal(84), "eighty-four");
+    eq("100", cardinal(100), "one hundred");
+    eq("101", cardinal(101), "one hundred one");
+    eq("712", cardinal(712), "seven hundred twelve");
+    eq("4712 (амер.)", cardinal(4712), "four thousand seven hundred twelve");
+    eq("4012 (амер.)", cardinal(4012), "four thousand twelve");
+    eq("999999", cardinal(999999), "nine hundred ninety-nine thousand nine hundred ninety-nine");
+    eq("1000000", cardinal(1000000), "one million");
+    eq("1000001", cardinal(1000001), "one million one");
+
+    // ---- 3.1 британское "and" ----
+    group("Британское «and» (§3.1)");
+    eq("101 +and", cardinal(101, { useAnd: true }), "one hundred and one");
+    eq("4712 +and", cardinal(4712, { useAnd: true }), "four thousand seven hundred and twelve");
+    eq("4012 +and", cardinal(4012, { useAnd: true }), "four thousand and twelve");
+    eq("100 +and (без and)", cardinal(100, { useAnd: true }), "one hundred");
+    eq("1000000 +and", cardinal(1000000, { useAnd: true }), "one million");
+
+    // ---- 3.2 Годы ----
+    group("Годы — формы (§3.2)");
+    includes("1984", yearForms(1984), "nineteen eighty-four");
+    includes("1900", yearForms(1900), "nineteen hundred");
+    includes("1905", yearForms(1905), "nineteen oh five");
+    eq("2000 = только «two thousand»", JSON.stringify(yearForms(2000)), JSON.stringify(["two thousand"]));
+    includes("2007", yearForms(2007), "two thousand seven");
+    includes("2007", yearForms(2007), "two thousand and seven");
+    includes("2007", yearForms(2007), "twenty oh seven");
+    includes("2024", yearForms(2024), "twenty twenty-four");
+    includes("2024", yearForms(2024), "two thousand twenty-four");
+    includes("1800", yearForms(1800), "eighteen hundred");
+    ok("формы 1984 без дублей", new Set(yearForms(1984)).size === yearForms(1984).length);
+
+    // ---- 3.3 Валюты ----
+    group("Валюты — плюрализация и копейки (§3.3)");
+    eq("USD 200.50", currencyToWords({ code: "USD", units: 200, sub: 50 }), "two hundred dollars and fifty cents");
+    eq("USD 1.00 (ед.ч., без and)", currencyToWords({ code: "USD", units: 1, sub: 0 }), "one dollar");
+    eq("USD 1.01", currencyToWords({ code: "USD", units: 1, sub: 1 }), "one dollar and one cent");
+    eq("USD 200.00 (без «and zero cents»)", currencyToWords({ code: "USD", units: 200, sub: 0 }), "two hundred dollars");
+    eq("EUR 200.05", currencyToWords({ code: "EUR", units: 200, sub: 5 }), "two hundred euros and five cents");
+    eq("GBP 1.01 (penny)", currencyToWords({ code: "GBP", units: 1, sub: 1 }), "one pound and one penny");
+    eq("GBP 2.02 (pence)", currencyToWords({ code: "GBP", units: 2, sub: 2 }), "two pounds and two pence");
+    eq("KRW 50000 (инвариант)", currencyToWords({ code: "KRW", units: 50000 }), "fifty thousand won");
+    eq("JPY 1 (инвариант, ед.)", currencyToWords({ code: "JPY", units: 1 }), "one yen");
+    eq("CNY 1 (инвариант)", currencyToWords({ code: "CNY", units: 1 }), "one yuan");
+    eq("THB 10 (инвариант)", currencyToWords({ code: "THB", units: 10 }), "ten baht");
+    eq("VND 1000000", currencyToWords({ code: "VND", units: 1000000 }), "one million dong");
+    eq("LKR 1 (rupee)", currencyToWords({ code: "LKR", units: 1 }), "one rupee");
+    eq("LKR 2 (rupees)", currencyToWords({ code: "LKR", units: 2 }), "two rupees");
+    eq("USD 120.50 +and", currencyToWords({ code: "USD", units: 120, sub: 50 }, { useAnd: true }), "one hundred and twenty dollars and fifty cents");
+
+    // ---- parseAmount ----
+    group("Парсинг ввода сумм");
+    eq('"200.5" → units', parseAmount("200.5").units, 200);
+    eq('"200.5" → sub (=50)', parseAmount("200.5").sub, 50);
+    eq('"200.50" → sub (=50)', parseAmount("200.50").sub, 50);
+    eq('"200" → sub (=0)', parseAmount("200").sub, 0);
+    ok('200.5 == 200.50 как числа', parseFloat("200.5") === parseFloat("200.50"));
+
+    // ---- сводка ----
+    const passed = results.filter(r => r.ok).length;
+    const total = results.length;
+    const failed = total - passed;
+    const sEl = document.getElementById("summary");
+    sEl.className = "summary " + (failed === 0 ? "pass" : "fail");
+    sEl.textContent = (failed === 0 ? "✓ ВСЕ ТЕСТЫ ПРОЙДЕНЫ" : "✗ ЕСТЬ ПАДЕНИЯ")
+      + " — " + passed + " / " + total + (failed ? " (упало: " + failed + ")" : "");
+
+    window.__RESULTS__ = {
+      passed, total, failed,
+      fails: results.filter(r => !r.ok).map(r => ({ group: r.group, label: r.label, actual: r.actual, expected: r.expected }))
+    };
+  </script>
+</body>
+</html>
