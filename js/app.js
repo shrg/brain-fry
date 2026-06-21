@@ -30,6 +30,7 @@ let item = null;    // текущий пример
 let attempts = 0;
 let wrongCount = 0;
 let revealed = false;
+let locked = false; // блокировка ввода на время перехода к следующему
 let firstSpeechEndTs = 0;
 let itemVoice = null;
 
@@ -125,7 +126,7 @@ function startSession() {
 }
 
 function nextItem() {
-  attempts = 0; wrongCount = 0; revealed = false; firstSpeechEndTs = 0;
+  attempts = 0; wrongCount = 0; revealed = false; locked = false; firstSpeechEndTs = 0;
   keypad.clear();
   $("#answer-display").innerHTML = "&nbsp;";
   $("#feedback").innerHTML = "&nbsp;";
@@ -145,26 +146,42 @@ function playItem(isFirst) {
   });
 }
 
-function onSubmit(value) {
-  if (!session || !item || revealed) return;
-  if (value.trim() === "") return;
-  attempts++;
+const digitCount = (s) => (String(s).match(/\d/g) || []).length;
 
-  if (checkAnswer(item, value)) {
-    const ms = firstSpeechEndTs ? Math.round(performance.now() - firstSpeechEndTs) : null;
-    logEvent({ firstTry: wrongCount === 0, skipped: false, msToFirstCorrect: ms });
-    flashCorrect();
-    session.count++;
-    $("#progress").textContent = String(session.count);
-    setTimeout(nextItem, 650);
-  } else {
-    // §6.5 неверно → бесконечный повтор того же числа той же скоростью, ответ скрыт
-    wrongCount++;
-    keypad.clear();
-    $("#answer-display").innerHTML = "&nbsp;";
-    flashWrong();
-    playItem(false);
-  }
+// Авто-проверка на каждый ввод: верно → дальше; набрана нужная длина и
+// неверно → автоповтор того же числа (§6.5). Без кнопки «Ответить».
+function onInput(value) {
+  if (!revealed) $("#answer-display").textContent = value || " ";
+  if (locked || revealed || !session || !item || value === "") return;
+  if (checkAnswer(item, value)) { handleCorrect(); return; }
+  if (digitCount(value) >= item.targetDigits) handleWrong();
+}
+
+// Enter на физической клавиатуре (десктоп) — форсированная проверка.
+function onSubmit(value) {
+  if (locked || revealed || !session || !item || value.trim() === "") return;
+  if (checkAnswer(item, value)) handleCorrect(); else handleWrong();
+}
+
+function handleCorrect() {
+  attempts++;
+  locked = true;
+  const ms = firstSpeechEndTs ? Math.round(performance.now() - firstSpeechEndTs) : null;
+  logEvent({ firstTry: wrongCount === 0, skipped: false, msToFirstCorrect: ms });
+  flashCorrect();
+  session.count++;
+  $("#progress").textContent = String(session.count);
+  setTimeout(nextItem, 650);
+}
+
+function handleWrong() {
+  // §6.5 неверно → бесконечный повтор того же числа той же скоростью, ответ скрыт
+  attempts++;
+  wrongCount++;
+  keypad.clear();
+  $("#answer-display").innerHTML = "&nbsp;";
+  flashWrong();
+  playItem(false);
 }
 
 function skip() {
@@ -234,6 +251,26 @@ function updateTimer() {
   const s = Math.floor((Date.now() - session.startTs) / 1000);
   const m = Math.floor(s / 60);
   $("#session-timer").textContent = m + ":" + String(s % 60).padStart(2, "0");
+}
+
+// Пресеты скорости прямо в упражнении: меняют темп и переозвучивают текущее.
+function renderSessionRate() {
+  const box = $("#session-rate");
+  if (!box) return;
+  box.innerHTML = "";
+  for (const p of CONFIG.ratePresets) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip small" + (Math.abs(settings.rate - p.value) < 0.001 ? " on" : "");
+    b.textContent = p.label;
+    b.addEventListener("click", () => {
+      settings.rate = p.value;
+      persistSettings();
+      renderSessionRate();
+      if (item && !revealed) playItem(false); // сразу услышать в новом темпе
+    });
+    box.appendChild(b);
+  }
 }
 
 // =====================================================================
@@ -366,7 +403,7 @@ function renderSettings() {
     b.className = "chip" + (Math.abs(settings.rate - p.value) < 0.001 ? " on" : "");
     b.textContent = p.label;
     b.addEventListener("click", () => {
-      settings.rate = p.value; persistSettings(); renderSettings();
+      settings.rate = p.value; persistSettings(); renderSettings(); renderSessionRate();
     });
     rp.appendChild(b);
   }
@@ -431,9 +468,8 @@ function toast(msg) {
 }
 
 function init() {
-  keypad = new Keypad($("#keypad"), { onChange: (v) => {
-    if (!revealed) $("#answer-display").textContent = v || " ";
-  }, onSubmit });
+  keypad = new Keypad($("#keypad"), { onChange: onInput, onSubmit });
+  renderSessionRate();
 
   buildSetup();
   bindStats();

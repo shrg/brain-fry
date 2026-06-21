@@ -33,6 +33,7 @@ function genNumber(category, settings) {
     expected: n,            // числовое значение для сравнения
     allowDecimal: false,
     displayAnswer: String(n),
+    targetDigits: String(n).length, // для авто-проверки (§ правки UX)
     rawWords: words,
     spokenForm: applyFraming(category, words, settings),
   };
@@ -50,6 +51,7 @@ function genYear(settings) {
     expected: y,
     allowDecimal: false,
     displayAnswer: String(y),
+    targetDigits: String(y).length,
     rawWords: words,
     spokenForm: applyFraming("year", words, settings),
   };
@@ -69,12 +71,15 @@ function genCurrency(enabledCurrencies, settings) {
     { useAnd: chance(CONFIG.andProbability) }
   );
   const expected = meta.hasCents ? units + sub / 100 : units;
+  // целевая длина = цифры целой части + минимально нужные знаки копеек
+  const decimalDigits = !meta.hasCents ? 0 : (sub === 0 ? 0 : (sub % 10 === 0 ? 1 : 2));
   return {
     category: "currency",
     currency: code,
     expected,
     allowDecimal: meta.hasCents,
     displayAnswer: formatMoney(units, sub, meta.hasCents),
+    targetDigits: String(units).length + decimalDigits,
     rawWords: words,
     spokenForm: applyFraming("currency", words, settings),
   };

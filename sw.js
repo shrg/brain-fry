@@ -1,7 +1,7 @@
 // Brain Fry — service worker. Оффлайн-оболочка: кешируем статику приложения.
 // Без сетевых запросов к третьим сторонам. Никакой аналитики.
 
-const CACHE = "brainfry-v1";
+const CACHE = "brainfry-v2";
 const ASSETS = [
   "./",
   "./index.html",

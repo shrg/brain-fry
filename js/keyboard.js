@@ -36,12 +36,6 @@ export class Keypad {
       btn.addEventListener("click", () => this._press(k));
       this.container.appendChild(btn);
     }
-    const submit = document.createElement("button");
-    submit.type = "button";
-    submit.className = "key key-submit";
-    submit.textContent = "Ответить";
-    submit.addEventListener("click", () => this.handlers.onSubmit && this.handlers.onSubmit(this.value));
-    this.container.appendChild(submit);
 
     // поддержка физической клавиатуры на десктопе (бонус)
     this._keyListener = (e) => {
