@@ -14,12 +14,18 @@ function framingGroup(category) {
   return "number";
 }
 
-// Применить обрамление (§2.4), если включено. Возвращает финальную фразу для TTS.
+// Применить обрамление (§2.4), если включено. Комбинаторика intro + {N} + outro:
+// случайно «начало» и «концовка», иногда число в начале, иногда голое.
 function applyFraming(category, words, settings) {
+  const f = CONFIG.framing;
   if (!settings.framing) return words;
-  if (chance(CONFIG.framing.bareRatio)) return words; // иногда «голое» число
-  const tpl = pick(CONFIG.framing.templates[framingGroup(category)]);
-  return tpl.replace("{N}", words);
+  if (chance(f.bareRatio)) return words; // иногда «голое» число
+  const pool = f.pools[framingGroup(category)];
+  let intro = chance(f.introChance) ? pick(pool.intro) : "";
+  let outro = chance(f.outroChance) ? pick(pool.outro) : "";
+  if (!intro && !outro) intro = pick(pool.intro); // не оставлять голым
+  const phrase = (intro ? intro + " " : "") + words + outro;
+  return phrase.replace(/\s+/g, " ").trim();
 }
 
 // --- числа 3–6 знаков ---

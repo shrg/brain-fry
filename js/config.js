@@ -31,27 +31,49 @@ export const CONFIG = {
   // §3.1 вероятность британского «and» на озвучку
   andProbability: 0.5,
 
-  // §2.4 обрамляющие фразы
+  // §2.4 обрамляющие фразы. Комбинаторика: intro + {число} + outro.
+  // intro и outro склеиваются случайно → сотни сочетаний из компактных пулов.
+  // Фразы НЕ содержат других чисел. outro уже включают свою пунктуацию/пробел.
   framing: {
-    bareRatio: 0.35, // доля «голых» чисел, когда обрамление включено
-    // шаблоны с плейсхолдером {N}; без посторонних чисел
-    templates: {
-      price: [
-        "That'll be {N}, please",
-        "The total comes to {N}",
-        "It costs {N} all together",
-        "{N}, please",
-      ],
-      year: [
-        "Back in {N}",
-        "It was the year {N}",
-        "That happened in {N}",
-      ],
-      number: [
-        "We shipped {N} units",
-        "About {N} of them",
-        "The count was {N}",
-      ],
+    bareRatio: 0.2,      // доля «голых» чисел, когда обрамление включено
+    introChance: 0.85,   // вероятность, что будет «начало» (иначе число в начале)
+    outroChance: 0.55,   // вероятность, что будет «концовка»
+    pools: {
+      price: {
+        intro: [
+          "That'll be", "That will be", "The total comes to", "The total is",
+          "That comes to", "It comes to", "Your total is", "It costs",
+          "That'll cost you", "Comes to", "That's", "It's",
+          "The grand total is", "That brings it to", "All together it's",
+        ],
+        outro: [
+          ", please", ", thanks", ", thank you", " all together", " in total",
+          " even", " exactly", " on the dot", ", if you don't mind", " all in",
+        ],
+      },
+      year: {
+        intro: [
+          "Back in", "It was", "It was the year", "That happened in",
+          "Sometime around", "Way back in", "All the way back in",
+          "It all started in", "This was in", "Around", "It began in",
+          "History was made in", "We're talking about", "Long ago, in",
+        ],
+        outro: [
+          ", believe it or not", ", if memory serves", ", long ago",
+          ", of all years", ", as it happens", " or thereabouts",
+        ],
+      },
+      number: {
+        intro: [
+          "We shipped", "We counted", "There were", "We had", "They sent",
+          "I counted", "We received", "About", "Roughly", "Some", "Nearly",
+          "We ordered", "The count was", "We're expecting", "We found",
+        ],
+        outro: [
+          " units", " of them", " in total", " all told", " items",
+          " pieces", " in all", " or so", " altogether",
+        ],
+      },
     },
   },
 
