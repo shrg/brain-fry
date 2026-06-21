@@ -41,6 +41,8 @@ export class DataStore {
       rate: CONFIG.defaultRate,
       voiceMode: "default", // "default" | "random"
       framing: false,       // §2.4 усложнитель, дефолт ВЫКЛ
+      dailyGoalMin: 0,      // цель практики в минутах (0 = выкл)
+      lastCongratsDate: null, // дата последнего поздравления (раз в день)
     };
     return Object.assign(def, this.adapter.read(KEYS.settings, {}));
   }

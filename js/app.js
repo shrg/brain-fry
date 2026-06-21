@@ -7,8 +7,8 @@ import { DataStore } from "./storage.js";
 import { TTS } from "./tts.js";
 import { generateItem, checkAnswer } from "./generator.js";
 import { Keypad } from "./keyboard.js";
-import { summarize } from "./stats.js";
-import { uid } from "./util.js";
+import { summarize, periodStart } from "./stats.js";
+import { uid, pick } from "./util.js";
 
 const ALL_CURRENCIES = Object.keys(CURRENCIES);
 const $ = (sel) => document.querySelector(sel);
@@ -43,7 +43,54 @@ function go(screen) {
   window.scrollTo(0, 0);
   if (screen === "stats") renderStats();
   if (screen === "settings") renderSettings();
+  if (screen === "setup") updateGoalProgress();
 }
+
+// =====================================================================
+// Цель на день
+// =====================================================================
+// Суммарное время сессий за сегодня (мс).
+function todayPracticeMs() {
+  const from = periodStart("day");
+  return store.getSessions()
+    .filter((s) => new Date(s.startTs).getTime() >= from)
+    .reduce((a, s) => a + (s.durationMs || 0), 0);
+}
+
+// Прогресс цели на стартовом экране.
+function updateGoalProgress() {
+  const box = $("#goal-progress");
+  if (!box) return;
+  const goal = settings.dailyGoalMin || 0;
+  if (goal <= 0) { box.classList.add("hidden"); return; }
+  const doneMin = Math.floor(todayPracticeMs() / 60000);
+  const pct = Math.min(100, Math.round((doneMin / goal) * 100));
+  const reached = doneMin >= goal;
+  box.classList.remove("hidden");
+  box.innerHTML =
+    '<div class="goal-line"><span>🎯 Сегодня: <b>' + doneMin + '</b> / ' + goal + ' мин</span>' +
+    '<span>' + (reached ? "✓ цель взята" : pct + "%") + '</span></div>' +
+    '<div class="goal-track"><span class="goal-fill" style="width:' + pct + '%"></span></div>';
+}
+
+// Проверка достижения цели после сессии → поздравление (раз в день).
+function maybeCongrats() {
+  const goal = settings.dailyGoalMin || 0;
+  if (goal <= 0) return;
+  const doneMin = Math.floor(todayPracticeMs() / 60000);
+  if (doneMin < goal) return;
+  const today = new Date().toISOString().slice(0, 10);
+  if (settings.lastCongratsDate === today) return; // уже поздравляли сегодня
+  settings.lastCongratsDate = today;
+  persistSettings();
+  showCongrats(pick(CONFIG.dailyCongrats));
+}
+
+function showCongrats(text) {
+  $("#congrats-text").textContent = text;
+  $("#congrats").classList.remove("hidden");
+}
+function hideCongrats() { $("#congrats").classList.add("hidden"); }
 
 // =====================================================================
 // SETUP
@@ -214,6 +261,7 @@ function stopSession() {
   go("stats");
   $("#period-tabs [data-p='day']").click();
   toast(done + " примеров за сессию");
+  maybeCongrats(); // поздравление, если дневная цель достигнута
 }
 
 function logEvent({ firstTry, skipped, msToFirstCorrect }) {
@@ -408,6 +456,20 @@ function renderSettings() {
     rp.appendChild(b);
   }
 
+  // пресеты дневной цели
+  const gp = $("#goal-presets");
+  gp.innerHTML = "";
+  for (const p of CONFIG.goalPresets) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + ((settings.dailyGoalMin || 0) === p.value ? " on" : "");
+    b.textContent = p.label;
+    b.addEventListener("click", () => {
+      settings.dailyGoalMin = p.value; persistSettings(); renderSettings();
+    });
+    gp.appendChild(b);
+  }
+
   // режим голоса
   const vm = $("#voice-modes");
   vm.innerHTML = "";
@@ -479,7 +541,11 @@ function init() {
   $("#repeat-btn").addEventListener("click", () => { if (item && !revealed) playItem(false); });
   $("#skip-btn").addEventListener("click", skip);
   $("#stop-btn").addEventListener("click", stopSession);
+  $("#congrats-close").addEventListener("click", hideCongrats);
+  $("#congrats").addEventListener("click", (e) => { if (e.target.id === "congrats") hideCongrats(); });
   $$("[data-go]").forEach((b) => b.addEventListener("click", () => go(b.dataset.go)));
+
+  updateGoalProgress(); // стартовый экран показывается первым
 
   // регистрация service worker (оффлайн-оболочка)
   if ("serviceWorker" in navigator) {

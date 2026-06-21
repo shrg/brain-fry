@@ -1,7 +1,7 @@
 // Brain Fry — service worker. Оффлайн-оболочка: кешируем статику приложения.
 // Без сетевых запросов к третьим сторонам. Никакой аналитики.
 
-const CACHE = "brainfry-v3";
+const CACHE = "brainfry-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -38,14 +38,13 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
-  // cache-first для оболочки, иначе сеть с откатом в кеш
+  // network-first: онлайн всегда отдаёт свежее, кэш — запасной для офлайна.
+  // Так обновления приложения долетают сразу, без застревания на старой версии.
   e.respondWith(
-    caches.match(req).then((cached) =>
-      cached || fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-        return res;
-      }).catch(() => cached)
-    )
+    fetch(req).then((res) => {
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      return res;
+    }).catch(() => caches.match(req))
   );
 });
