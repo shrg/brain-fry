@@ -90,7 +90,8 @@ button:active { transform: translateY(1px); }
 }
 .chip.small { padding: 6px 12px; font-size: 13px; }
 .chip.on { background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #fff; border-color: transparent; }
-.hidden { display: none; }
+/* utility: всегда побеждает любой display у базового класса (напр. .congrats) */
+.hidden { display: none !important; }
 
 /* session */
 .listen-area { text-align: center; padding: 18px 0 8px; }
