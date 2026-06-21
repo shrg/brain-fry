@@ -2,373 +2,133 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0b070d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Brain Fry" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Brain Fry — проба TTS</title>
-  <style>
-    :root {
-      --bg: #0b070d;
-      --bg2: #170c16;
-      --card: #1c1019;
-      --text: #f6e9e0;
-      --muted: #b59a93;
-      --accent: #ff5a36;
-      --accent2: #ff2e63;
-      --good: #36d399;
-      --warn: #ffc42e;
-      --line: #34202b;
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(120% 80% at 50% 0%, var(--bg2), var(--bg));
-      color: var(--text);
-      min-height: 100vh;
-      padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
-      line-height: 1.45;
-    }
-    .wrap { max-width: 560px; margin: 0 auto; }
-    header { text-align: center; padding: 24px 0 8px; }
-    header h1 {
-      font-size: 26px; margin: 0;
-      background: linear-gradient(90deg, #ff9a3d, #ff2e63);
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-    }
-    header p { color: var(--muted); margin: 6px 0 0; font-size: 14px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 16px;
-      margin: 14px 0;
-    }
-    h2 { font-size: 16px; margin: 0 0 10px; }
-    button {
-      font: inherit;
-      color: var(--text);
-      background: var(--bg2);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px 16px;
-      cursor: pointer;
-      touch-action: manipulation;
-    }
-    button:active { transform: translateY(1px); }
-    .btn-primary {
-      width: 100%;
-      font-size: 18px;
-      font-weight: 600;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      border: none;
-      color: #fff;
-      padding: 18px;
-    }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    .row button { flex: 1; min-width: 120px; }
-    .big-number {
-      text-align: center;
-      font-size: 40px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      margin: 8px 0;
-      color: var(--warn);
-    }
-    .spoken {
-      text-align: center; color: var(--muted); font-size: 14px;
-      min-height: 20px; font-style: italic;
-    }
-    .status {
-      font-size: 14px; padding: 10px 12px; border-radius: 10px;
-      background: var(--bg2); border: 1px solid var(--line); margin-top: 10px;
-      word-break: break-word;
-    }
-    .ok { color: var(--good); }
-    .bad { color: var(--accent2); }
-    .warnc { color: var(--warn); }
-    ul.voices { list-style: none; margin: 8px 0 0; padding: 0; }
-    ul.voices li {
-      padding: 8px 10px; border-bottom: 1px solid var(--line);
-      font-size: 14px; display: flex; justify-content: space-between; gap: 8px;
-    }
-    ul.voices li:last-child { border-bottom: none; }
-    .vname { font-weight: 600; }
-    .vmeta { color: var(--muted); font-size: 12px; text-align: right; }
-    .pill {
-      display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px;
-      background: var(--bg); border: 1px solid var(--line); color: var(--muted); margin-left: 6px;
-    }
-    .pill.def { color: var(--good); border-color: var(--good); }
-    label.field { display: block; margin-top: 12px; font-size: 14px; color: var(--muted); }
-    input[type=range] { width: 100%; }
-    .small { font-size: 12px; color: var(--muted); }
-    pre {
-      white-space: pre-wrap; word-break: break-word; font-size: 12px;
-      background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid var(--line);
-      color: var(--muted); max-height: 220px; overflow: auto;
-    }
-  </style>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./css/app.css" />
+  <title>Brain Fry</title>
 </head>
 <body>
-  <div class="wrap">
-    <header>
+<div id="app">
+
+  <!-- ===================== SETUP ===================== -->
+  <section id="screen-setup" class="screen active">
+    <header class="brand">
       <h1>Brain Fry</h1>
-      <p>Проба TTS · проверка Web Speech на этом устройстве</p>
+      <p>Тренажёр восприятия английских чисел на слух</p>
     </header>
 
     <div class="card">
-      <h2>1. Проверка озвучки</h2>
-      <div class="big-number" id="num">—</div>
-      <div class="spoken" id="spoken"></div>
-      <button class="btn-primary" id="speakBtn">🔊 Произнести число</button>
-      <div class="row">
-        <button id="newBtn">🎲 Другое число</button>
-        <button id="repeatBtn">🔁 Повторить</button>
+      <h2>Категории</h2>
+      <div id="cat-list" class="checks"></div>
+
+      <div id="currency-box" class="subbox hidden">
+        <button id="currency-toggle" class="link-btn" type="button">Какие валюты ▾</button>
+        <div id="currency-chips" class="chips hidden"></div>
       </div>
-      <label class="field">Скорость речи: <span id="rateVal">1.0</span>
-        <input type="range" id="rate" min="0.5" max="1.5" step="0.1" value="1.0" />
+    </div>
+
+    <button id="start-btn" class="btn-primary">▶ Старт</button>
+    <p id="setup-hint" class="hint"></p>
+
+    <nav class="bottom-nav">
+      <button data-go="stats" class="nav-btn">📊 Статистика</button>
+      <button data-go="settings" class="nav-btn">⚙️ Настройки</button>
+    </nav>
+  </section>
+
+  <!-- ===================== SESSION ===================== -->
+  <section id="screen-session" class="screen">
+    <header class="session-top">
+      <button id="stop-btn" class="ghost-btn">■ Стоп</button>
+      <div id="progress" class="progress">0</div>
+      <div id="session-timer" class="progress muted">0:00</div>
+    </header>
+
+    <div class="listen-area">
+      <button id="repeat-btn" class="speaker" aria-label="Повторить">🔊</button>
+      <p class="listen-hint">Слушай число и введи его цифрами</p>
+      <div id="answer-display" class="answer-display">&nbsp;</div>
+      <div id="feedback" class="feedback">&nbsp;</div>
+    </div>
+
+    <div class="session-controls">
+      <button id="skip-btn" class="ghost-btn wide">⏭ Пропустить</button>
+    </div>
+
+    <div id="keypad" class="keypad"></div>
+  </section>
+
+  <!-- ===================== STATS ===================== -->
+  <section id="screen-stats" class="screen">
+    <header class="sub-header">
+      <button data-go="setup" class="back-btn">‹ Назад</button>
+      <h2>Статистика</h2>
+    </header>
+
+    <div class="period-tabs" id="period-tabs">
+      <button data-p="day" class="tab">День</button>
+      <button data-p="week" class="tab active">Неделя</button>
+      <button data-p="month" class="tab">Месяц</button>
+      <button data-p="all" class="tab">Всё время</button>
+    </div>
+
+    <div id="stats-body"></div>
+
+    <div class="card">
+      <h2>Данные</h2>
+      <p class="hint">Данные хранятся только в этом браузере. Чистка кэша или смена устройства = потеря. Делай экспорт.</p>
+      <div class="row">
+        <button id="export-btn" class="ghost-btn">⬇ Экспорт JSON</button>
+        <button id="import-btn" class="ghost-btn">⬆ Импорт JSON</button>
+      </div>
+      <input id="import-file" type="file" accept="application/json,.json" hidden />
+    </div>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section id="screen-settings" class="screen">
+    <header class="sub-header">
+      <button data-go="setup" class="back-btn">‹ Назад</button>
+      <h2>Настройки</h2>
+    </header>
+
+    <div class="card">
+      <h2>Скорость речи</h2>
+      <div id="rate-presets" class="chips"></div>
+    </div>
+
+    <div class="card">
+      <h2>Голос</h2>
+      <div id="voice-modes" class="chips"></div>
+      <p class="hint">«Случайный» работает не на всех айфонах — если годных голосов мало, тихо берётся системный по умолчанию.</p>
+    </div>
+
+    <div class="card">
+      <h2>Усложнитель</h2>
+      <label class="toggle-row">
+        <span>Обрамляющие фразы<br><small class="hint">Число вшивается в английскую фразу — вычленяй на слух</small></span>
+        <input type="checkbox" id="framing-toggle" />
       </label>
-      <div class="status" id="speakStatus">Нажми кнопку, чтобы услышать число. Первое нажатие «будит» речь на iOS.</div>
     </div>
 
     <div class="card">
-      <h2>2. Голоса <code>en-*</code>, найденные на устройстве</h2>
-      <div class="status" id="voiceSummary">Загружаю список голосов…</div>
-      <ul class="voices" id="voiceList"></ul>
-      <div class="row">
-        <button id="reloadVoices">↻ Обновить список</button>
-        <button id="randomVoice">🎙 Случайный голос</button>
-      </div>
-      <p class="small" id="randomNote"></p>
+      <h2>Голоса на этом устройстве <span class="hint">(диагностика)</span></h2>
+      <div id="voice-diag" class="voice-diag"></div>
     </div>
 
     <div class="card">
-      <h2>3. Диагностика</h2>
-      <p class="small">Если с озвучкой что-то не так — пришли мне этот текст.</p>
-      <pre id="diag">собираю…</pre>
-      <button id="copyDiag" style="width:100%; margin-top:10px;">📋 Скопировать диагностику</button>
+      <button id="clear-btn" class="ghost-btn danger">🗑 Очистить всю статистику</button>
     </div>
-  </div>
+  </section>
 
-  <script>
-  (function () {
-    "use strict";
+</div>
 
-    var synth = window.speechSynthesis;
-    var supported = !!synth && typeof SpeechSynthesisUtterance !== "undefined";
-
-    var el = function (id) { return document.getElementById(id); };
-    var numEl = el("num"), spokenEl = el("spoken"), speakStatus = el("speakStatus");
-    var voiceList = el("voiceList"), voiceSummary = el("voiceSummary");
-    var diagEl = el("diag"), randomNoteEl = el("randomNote");
-    var rateInput = el("rate"), rateVal = el("rateVal");
-
-    var currentNumber = null;
-    var currentText = "";
-    var chosenVoice = null;       // null = системный дефолт
-    var useRandomVoice = false;
-    var voices = [];
-    var resumeTimer = null;
-
-    // ---------- число -> английские слова (минимальная версия для пробы) ----------
-    var ONES = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
-      "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
-    var TENS = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
-
-    function under1000(n) {
-      var w = [];
-      if (n >= 100) { w.push(ONES[Math.floor(n / 100)], "hundred"); n %= 100; }
-      if (n >= 20) { w.push(TENS[Math.floor(n / 10)]); if (n % 10) w.push(ONES[n % 10]); }
-      else if (n > 0) { w.push(ONES[n]); }
-      return w.join(" ");
-    }
-    function numberToWords(n) {
-      if (n === 0) return "zero";
-      var parts = [];
-      var scales = [["million", 1000000], ["thousand", 1000]];
-      for (var i = 0; i < scales.length; i++) {
-        var div = scales[i][1];
-        if (n >= div) {
-          parts.push(under1000(Math.floor(n / div)) + " " + scales[i][0]);
-          n %= div;
-        }
-      }
-      if (n > 0) parts.push(under1000(n));
-      return parts.join(" ");
-    }
-
-    function newNumber() {
-      // случайное 3–6-значное число для пробы
-      var digits = 3 + Math.floor(Math.random() * 4);
-      var min = Math.pow(10, digits - 1);
-      var max = Math.pow(10, digits) - 1;
-      currentNumber = min + Math.floor(Math.random() * (max - min + 1));
-      currentText = numberToWords(currentNumber);
-      numEl.textContent = currentNumber.toLocaleString("en-US");
-      spokenEl.textContent = "«" + currentText + "»";
-    }
-
-    // ---------- голоса ----------
-    function loadVoices() {
-      var all = synth ? synth.getVoices() : [];
-      voices = all.filter(function (v) { return /^en(-|_|$)/i.test(v.lang); });
-      renderVoices(all.length);
-      updateDiag(all);
-    }
-
-    function renderVoices(totalCount) {
-      voiceList.innerHTML = "";
-      if (!supported) {
-        voiceSummary.innerHTML = '<span class="bad">Web Speech API не поддерживается этим браузером.</span>';
-        return;
-      }
-      if (voices.length === 0) {
-        voiceSummary.innerHTML = '<span class="warnc">Найдено 0 английских голосов'
-          + (totalCount ? " (всего голосов: " + totalCount + ")" : "")
-          + '.</span> На iOS список иногда пустой при первом заходе — нажми «Обновить» или сначала произнеси число. Озвучка всё равно работает на системном голосе по умолчанию.';
-        return;
-      }
-      voiceSummary.innerHTML = '<span class="ok">Найдено английских голосов: ' + voices.length + '</span> (всего: ' + totalCount + ').';
-      voices.forEach(function (v) {
-        var li = document.createElement("li");
-        var left = document.createElement("div");
-        left.innerHTML = '<span class="vname">' + v.name + '</span>'
-          + (v.default ? '<span class="pill def">по умолчанию</span>' : '')
-          + (v.localService ? '' : '<span class="pill">сетевой</span>');
-        var right = document.createElement("div");
-        right.className = "vmeta";
-        right.textContent = v.lang;
-        li.appendChild(left); li.appendChild(right);
-        li.addEventListener("click", function () {
-          chosenVoice = v; useRandomVoice = false;
-          randomNoteEl.textContent = "Выбран голос: " + v.name + ". Нажми «Произнести число».";
-        });
-        voiceList.appendChild(li);
-      });
-    }
-
-    function pickRandomVoice() {
-      if (voices.length > 1) {
-        chosenVoice = voices[Math.floor(Math.random() * voices.length)];
-        useRandomVoice = true;
-        randomNoteEl.innerHTML = '<span class="ok">Случайный голос: ' + chosenVoice.name + '</span>';
-      } else {
-        chosenVoice = null;
-        randomNoteEl.innerHTML = '<span class="warnc">Голосов ≤ 1 — фолбэк на системный по умолчанию (так и задумано для iOS).</span>';
-      }
-    }
-
-    // ---------- речь с обходами iOS ----------
-    function speak(text) {
-      if (!supported) { speakStatus.innerHTML = '<span class="bad">Web Speech не поддерживается.</span>'; return; }
-      try { synth.cancel(); } catch (e) {}
-
-      var u = new SpeechSynthesisUtterance(text);
-      u.lang = (chosenVoice && chosenVoice.lang) || "en-US";
-      u.rate = parseFloat(rateInput.value) || 1.0;
-      if (chosenVoice) u.voice = chosenVoice;
-
-      u.onstart = function () {
-        speakStatus.innerHTML = '<span class="ok">▶ Говорю…</span> голос: '
-          + (u.voice ? u.voice.name : "системный по умолчанию") + ', скорость ' + u.rate.toFixed(1);
-        startResumeKeepalive();
-      };
-      u.onend = function () {
-        speakStatus.innerHTML = '<span class="ok">✓ Озвучка прошла.</span> Слышно? Тогда главный риск §10 закрыт 🎉';
-        stopResumeKeepalive();
-      };
-      u.onerror = function (ev) {
-        speakStatus.innerHTML = '<span class="bad">Ошибка озвучки: ' + (ev.error || "неизвестно") + '</span>';
-        stopResumeKeepalive();
-      };
-
-      synth.speak(u);
-
-      // на iOS иногда speak() молчит, если голоса ещё не догрузились — мягкая повторная попытка
-      setTimeout(function () {
-        if (!synth.speaking && !synth.pending) {
-          loadVoices();
-        }
-      }, 300);
-    }
-
-    function startResumeKeepalive() {
-      stopResumeKeepalive();
-      resumeTimer = setInterval(function () {
-        if (synth.speaking) { try { synth.resume(); } catch (e) {} }
-        else { stopResumeKeepalive(); }
-      }, 4000);
-    }
-    function stopResumeKeepalive() {
-      if (resumeTimer) { clearInterval(resumeTimer); resumeTimer = null; }
-    }
-
-    // ---------- диагностика ----------
-    function updateDiag(all) {
-      var lines = [];
-      lines.push("Brain Fry · TTS probe");
-      lines.push("UA: " + navigator.userAgent);
-      lines.push("speechSynthesis: " + (supported ? "есть" : "НЕТ"));
-      lines.push("Standalone (установлено на Домой): " + (window.navigator.standalone === true ? "да" : "нет"));
-      lines.push("Всего голосов: " + (all ? all.length : 0));
-      lines.push("Английских (en-*): " + voices.length);
-      voices.forEach(function (v) {
-        lines.push("  • " + v.name + " [" + v.lang + "]"
-          + (v.default ? " default" : "") + (v.localService ? " local" : " network"));
-      });
-      diagEl.textContent = lines.join("\n");
-    }
-
-    // ---------- события ----------
-    el("speakBtn").addEventListener("click", function () {
-      if (currentNumber === null) newNumber();
-      if (useRandomVoice) pickRandomVoice();
-      speak(currentText);
-    });
-    el("newBtn").addEventListener("click", function () {
-      newNumber();
-      if (useRandomVoice) pickRandomVoice();
-      speak(currentText);
-    });
-    el("repeatBtn").addEventListener("click", function () {
-      if (currentNumber === null) newNumber();
-      speak(currentText);
-    });
-    el("reloadVoices").addEventListener("click", loadVoices);
-    el("randomVoice").addEventListener("click", function () {
-      pickRandomVoice();
-      if (currentNumber === null) newNumber();
-      speak(currentText);
-    });
-    rateInput.addEventListener("input", function () { rateVal.textContent = parseFloat(rateInput.value).toFixed(1); });
-    el("copyDiag").addEventListener("click", function () {
-      var t = diagEl.textContent;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(t).then(function () {
-          el("copyDiag").textContent = "✓ Скопировано";
-          setTimeout(function () { el("copyDiag").textContent = "📋 Скопировать диагностику"; }, 1500);
-        });
-      }
-    });
-
-    // обрыв в фоне — сбрасываем речь (§4.2)
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) { try { synth.cancel(); } catch (e) {} stopResumeKeepalive(); }
-    });
-
-    // голоса приходят асинхронно — ждём voiceschanged (§4.2)
-    if (supported && typeof synth.onvoiceschanged !== "undefined") {
-      synth.onvoiceschanged = loadVoices;
-    }
-
-    newNumber();
-    loadVoices();
-    // несколько отложенных попыток — iOS любит отдавать голоса не сразу
-    setTimeout(loadVoices, 250);
-    setTimeout(loadVoices, 1000);
-    setTimeout(loadVoices, 2500);
-  })();
-  </script>
+<script type="module" src="./js/app.js"></script>
 </body>
 </html>
